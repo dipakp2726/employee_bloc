@@ -1,7 +1,7 @@
 import 'package:employee/edit_employee/edit_employee.dart';
 import 'package:employee/employee_overview/employee_overview.dart';
+import 'package:employee/utils/date_extension.dart';
 import 'package:employee_repository/employee_repository.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -22,41 +22,131 @@ class EmployeeOverviewView extends StatelessWidget {
             EmployeeOverviewInitial() => CircularProgressIndicator(),
             EmployeeOverviewLoading() => CircularProgressIndicator(),
             EmployeeOverviewFailure() => SizedBox(),
-            EmployeeOverviewSuccess() => EmployeeList(
+            EmployeeOverviewSuccess() => EmployeeView(
                 employeeList: state.employees,
               ),
           };
         },
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(context, EditEmployeePage.route());
+        },
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        child: Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
+      ),
     );
   }
 }
 
-class EmployeeList extends StatelessWidget {
-  const EmployeeList({super.key, required this.employeeList});
+class EmployeeView extends StatelessWidget {
+  const EmployeeView({super.key, required this.employeeList});
 
   final List<Employee> employeeList;
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoScrollbar(
-      child: ListView(
-        children: [
-          for (final employee in employeeList)
-            EmployeeListTile(
-              employee: employee,
-              onDismissed: (_) {
-                context
-                    .read<EmployeeOverviewBloc>()
-                    .add(EmployeeOverviewEmployeeDeleted(employee));
-              },
-              onTap: () {
-                Navigator.of(context).push(
-                  EditEmployeePage.route(initialEmployee: employee),
-                );
-              },
+    if (employeeList.isEmpty) {
+      return Center(
+        child: Image.asset('assets/not_found.png'),
+      );
+    }
+
+    final currentEmployees =
+        employeeList.where((e) => e.endDate == null).toList();
+    final previousEmployees =
+        employeeList.where((e) => e.endDate != null).toList();
+
+    final theme =Theme.of(context);
+
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _HeaderWidget(title: 'Current Employees'),
+                _EmployeeList(employeeList: currentEmployees),
+                _HeaderWidget(title: 'Previous Employees'),
+                _EmployeeList(employeeList: previousEmployees),
+              ],
             ),
-        ],
+          ),
+        ),
+        Container(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 36),
+          color: Colors.grey.shade100,
+          width: double.infinity,
+          child: Text(
+            'Swipe left to delete',
+            style: theme.textTheme.bodyMedium!.copyWith(
+              color: Colors.grey,
+
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EmployeeList extends StatelessWidget {
+  const _EmployeeList({
+    required this.employeeList,
+  });
+
+  final List<Employee> employeeList;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      physics: NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      itemBuilder: (context, index) {
+        final employee = employeeList[index];
+        return EmployeeListTile(
+          employee: employee,
+          onDismissed: (_) {
+            context
+                .read<EmployeeOverviewBloc>()
+                .add(EmployeeOverviewEmployeeDeleted(employee));
+          },
+          onTap: () {
+            Navigator.of(context).push(
+              EditEmployeePage.route(initialEmployee: employee),
+            );
+          },
+        );
+      },
+      separatorBuilder: (context, index) => Divider(),
+      itemCount: employeeList.length,
+    );
+  }
+}
+
+class _HeaderWidget extends StatelessWidget {
+  const _HeaderWidget({
+    required this.title,
+  });
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: EdgeInsets.all(16),
+      color: Colors.grey.shade100,
+      width: double.infinity,
+      child: Text(
+        title,
+        style: theme.textTheme.bodyLarge!.copyWith(
+          color: theme.primaryColor,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -73,7 +163,8 @@ class EmployeeListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final captionColor = theme.textTheme.bodySmall?.color;
+
+    final isCurrentEmployee = employee.endDate == null;
 
     return Dismissible(
       key: Key('employeeListTile_dismissible_${employee.id}'),
@@ -93,12 +184,36 @@ class EmployeeListTile extends StatelessWidget {
         title: Text(
           employee.name,
           maxLines: 1,
+          style: Theme.of(context).textTheme.bodyLarge,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Text(
-          employee.role,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                employee.role,
+                maxLines: 1,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium!
+                    .copyWith(color: Colors.grey),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Text(
+              isCurrentEmployee
+                  ? 'From ${employee.startDate.toDateOnly}'
+                  : '${employee.startDate.toDateOnly} - ${employee.endDate?.toDateOnly}',
+              maxLines: 1,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium!
+                  .copyWith(color: Colors.grey),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );
