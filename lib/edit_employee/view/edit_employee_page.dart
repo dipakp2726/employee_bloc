@@ -12,7 +12,6 @@ class EditEmployeePage extends StatelessWidget {
 
   static Route<void> route({Employee? initialEmployee}) {
     return MaterialPageRoute(
-      fullscreenDialog: true,
       builder: (context) => BlocProvider(
         create: (context) => EditEmployeeBloc(
           employeeRepository: context.read<EmployeeRepository>(),

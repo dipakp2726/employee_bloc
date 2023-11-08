@@ -12,12 +12,19 @@ class EditEmployeeBloc extends Bloc<EditEmployeeEvent, EditEmployeeState> {
     required EmployeeRepository employeeRepository,
     Employee? initialEmployee,
   })  : _employeeRepository = employeeRepository,
-        super(EditEmployeeState(initialEmployee: initialEmployee)) {
+        super(EditEmployeeState(
+          initialEmployee: initialEmployee,
+          startDate: initialEmployee?.startDate,
+          endDate: initialEmployee?.endDate,
+          name: initialEmployee?.name ?? '',
+          role: initialEmployee?.role ?? '',
+        )) {
     on<EditEmployeeNameChanged>(_onNameChanged);
     on<EditEmployeeRoleChanged>(_onRoleChanged);
     on<EditEmployeeStartDateChanged>(_onStartDateChanged);
     on<EditEmployeeEndDateChanged>(_onEndDateChanged);
     on<EditEmployeeSubmitted>(_onSubmitted);
+    on<EditEmployeeDeleted>(_onDeleted);
   }
 
   final EmployeeRepository _employeeRepository;
@@ -60,5 +67,11 @@ class EditEmployeeBloc extends Bloc<EditEmployeeEvent, EditEmployeeState> {
     } catch (e) {
       emit(state.copyWith(status: EditEmployeeStatus.failure));
     }
+  }
+
+  Future<void> _onDeleted(
+      EditEmployeeDeleted event, Emitter<EditEmployeeState> emit) async {
+    assert(state.initialEmployee != null, 'initial employee must be non null');
+    await _employeeRepository.deleteEmployee(state.initialEmployee!.id);
   }
 }

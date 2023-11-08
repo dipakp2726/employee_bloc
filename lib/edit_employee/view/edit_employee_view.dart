@@ -14,9 +14,28 @@ class EditEmployeeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isNewEmployee = context.select(
+      (EditEmployeeBloc bloc) => bloc.state.isNewEmployee,
+    );
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Employee Details'),
+        title: Text(
+          isNewEmployee ? 'Add Employee Details' : 'Edit Employee Details',
+        ),
+        automaticallyImplyLeading: false,
+        actions: [
+          if(!isNewEmployee)
+          IconButton(
+            onPressed: () {
+              context.read<EditEmployeeBloc>().add(EditEmployeeDeleted());
+              Navigator.pop(context);
+            },
+            icon: Icon(
+              Icons.delete,
+            ),
+          )
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

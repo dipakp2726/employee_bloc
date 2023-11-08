@@ -48,3 +48,8 @@ final class EditEmployeeEndDateChanged extends EditEmployeeEvent {
 final class EditEmployeeSubmitted extends EditEmployeeEvent {
   const EditEmployeeSubmitted();
 }
+
+final class EditEmployeeDeleted extends EditEmployeeEvent {
+  const EditEmployeeDeleted();
+
+}
