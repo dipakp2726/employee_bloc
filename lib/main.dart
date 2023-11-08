@@ -1,20 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:local_storage_employee_api/local_storage_employee_api.dart';
 
-void main() {
-  runApp(const MainApp());
-}
+import 'bootstrap.dart';
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
-    );
-  }
+  final employeeApi = LocalStorageEmployeeApi(
+    plugin: await SharedPreferences.getInstance(),
+  );
+
+  bootstrap(employeeApi: employeeApi);
 }
